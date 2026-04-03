@@ -9,6 +9,7 @@ class KDNode {
 class KDTree {
     constructor() {
         this.root = null;
+        
     }
 
     // Build tree from array of points

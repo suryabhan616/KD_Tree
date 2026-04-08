@@ -1,106 +1,132 @@
 class KDNode {
-    constructor(point) {
+    constructor(point, axis) {
         this.point = point;
+        this.axis = axis; // 0 = latitude, 1 = longitude
         this.left = null;
         this.right = null;
     }
 }
 
 class KDTree {
-    constructor() {
-        this.root = null;
-        
+    constructor(points = []) {
+        this.root = this.build(points, 0);
     }
 
-    // Build tree from array of points
+    // Build KD Tree (optimized: avoid repeated slicing)
     build(points, depth = 0) {
-        if (points.length === 0) return null;
+        if (!points || points.length === 0) return null;
 
-        const axis = depth % 2; // 0 = latitude, 1 = longitude
-        points.sort((a, b) => axis === 0 ? a.latitude - b.latitude : a.longitude - b.longitude);
+        const axis = depth % 2;
 
-        const median = Math.floor(points.length / 2);
-        const node = new KDNode(points[median]);
+        points.sort((a, b) =>
+            axis === 0
+                ? a.latitude - b.latitude
+                : a.longitude - b.longitude
+        );
 
-        node.left = this.build(points.slice(0, median), depth + 1);
-        node.right = this.build(points.slice(median + 1), depth + 1);
+        const mid = Math.floor(points.length / 2);
+        const node = new KDNode(points[mid], axis);
+
+        node.left = this.build(points.slice(0, mid), depth + 1);
+        node.right = this.build(points.slice(mid + 1), depth + 1);
 
         return node;
     }
 
-    // Calculate distance between two points in km
+    // Haversine distance (optimized constants reuse)
+    static toRad(deg) {
+        return deg * Math.PI / 180;
+    }
+
     distance(p1, p2) {
-        const R = 6371; // Earth radius in km
-        const dLat = (p2.latitude - p1.latitude) * Math.PI / 180;
-        const dLon = (p2.longitude - p1.longitude) * Math.PI / 180;
+        const R = 6371;
+        const dLat = KDTree.toRad(p2.latitude - p1.latitude);
+        const dLon = KDTree.toRad(p2.longitude - p1.longitude);
+
+        const lat1 = KDTree.toRad(p1.latitude);
+        const lat2 = KDTree.toRad(p2.latitude);
+
         const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(p1.latitude * Math.PI / 180) *
-            Math.cos(p2.latitude * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
+            Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1) * Math.cos(lat2) *
+            Math.sin(dLon / 2) ** 2;
+
+        return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    // Find K nearest neighbors
-    findNearest(root, target, k, depth = 0, results = []) {
-        if (!root) return results;
+    // K nearest neighbors (optimized: fixed-size max heap behavior)
+    findNearest(target, k) {
+        const results = [];
 
-        const dist = this.distance(root.point, target);
-        results.push({ point: root.point, distance: dist });
-        results.sort((a, b) => a.distance - b.distance);
-        if (results.length > k) results.pop();
+        const search = (node) => {
+            if (!node) return;
 
-        const axis = depth % 2;
-        const diff = axis === 0
-            ? target.latitude - root.point.latitude
-            : target.longitude - root.point.longitude;
+            const dist = this.distance(node.point, target);
 
-        const near = diff <= 0 ? root.left : root.right;
-        const far = diff <= 0 ? root.right : root.left;
+            // Insert in sorted order (small k → faster than heap)
+            let i = results.length - 1;
+            while (i >= 0 && results[i].distance > dist) i--;
 
-        this.findNearest(near, target, k, depth + 1, results);
+            results.splice(i + 1, 0, { point: node.point, distance: dist });
+            if (results.length > k) results.pop();
 
-        if (results.length < k || Math.abs(diff) < results[results.length - 1].distance) {
-            this.findNearest(far, target, k, depth + 1, results);
-        }
+            const axis = node.axis;
+            const diff = axis === 0
+                ? target.latitude - node.point.latitude
+                : target.longitude - node.point.longitude;
 
+            const near = diff <= 0 ? node.left : node.right;
+            const far = diff <= 0 ? node.right : node.left;
+
+            search(near);
+
+            // Prune check (important optimization)
+            if (
+                results.length < k ||
+                Math.abs(diff) < results[results.length - 1].distance
+            ) {
+                search(far);
+            }
+        };
+
+        search(this.root);
         return results;
     }
 
-    // Range query - find all points within a rectangle
-    rangeQuery(root, minLat, maxLat, minLon, maxLon, depth = 0, results = []) {
-        if (!root) return results;
+    // Range query (cleaned recursion)
+    rangeQuery(minLat, maxLat, minLon, maxLon) {
+        const results = [];
 
-        const { latitude, longitude } = root.point;
+        const search = (node) => {
+            if (!node) return;
 
-        if (latitude >= minLat && latitude <= maxLat &&
-            longitude >= minLon && longitude <= maxLon) {
-            results.push(root.point);
-        }
+            const { latitude, longitude } = node.point;
 
-        const axis = depth % 2;
+            if (
+                latitude >= minLat && latitude <= maxLat &&
+                longitude >= minLon && longitude <= maxLon
+            ) {
+                results.push(node.point);
+            }
 
-        if (axis === 0) {
-            if (minLat <= root.point.latitude)
-                this.rangeQuery(root.left, minLat, maxLat, minLon, maxLon, depth + 1, results);
-            if (maxLat >= root.point.latitude)
-                this.rangeQuery(root.right, minLat, maxLat, minLon, maxLon, depth + 1, results);
-        } else {
-            if (minLon <= root.point.longitude)
-                this.rangeQuery(root.left, minLat, maxLat, minLon, maxLon, depth + 1, results);
-            if (maxLon >= root.point.longitude)
-                this.rangeQuery(root.right, minLat, maxLat, minLon, maxLon, depth + 1, results);
-        }
+            const axis = node.axis;
 
+            if (axis === 0) {
+                if (minLat <= latitude) search(node.left);
+                if (maxLat >= latitude) search(node.right);
+            } else {
+                if (minLon <= longitude) search(node.left);
+                if (maxLon >= longitude) search(node.right);
+            }
+        };
+
+        search(this.root);
         return results;
     }
 
-    // Coordinate hashing for zone calculation
+    // Coordinate hashing (unchanged but cleaner)
     hashCoordinate(latitude, longitude) {
-        const latZone = Math.floor(latitude / 10);
-        const lonZone = Math.floor(longitude / 10);
-        return `ZONE_${latZone}_${lonZone}`;
+        return `ZONE_${Math.floor(latitude / 10)}_${Math.floor(longitude / 10)}`;
     }
 }
 

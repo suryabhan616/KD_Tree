@@ -5,9 +5,6 @@ const KDTree = require('../kdtree/KDTree');
 
 const tree = new KDTree();
 
-// ==================
-// ADD A NEW LOCATION
-// ==================
 router.post('/add', async (req, res) => {
     try {
         const { name, latitude, longitude } = req.body;
@@ -33,9 +30,6 @@ router.post('/add', async (req, res) => {
     }
 });
 
-// ==================
-// GET ALL LOCATIONS
-// ==================
 router.get('/all', async (req, res) => {
     try {
         const locations = await Location.find();
@@ -45,8 +39,6 @@ router.get('/all', async (req, res) => {
     }
 });
 
-
-// FIND K NEAREST NEIGHBORS
 
 router.post('/nearest', async (req, res) => {
     try {
@@ -69,8 +61,6 @@ router.post('/nearest', async (req, res) => {
     }
 });
 
-// RANGE QUERY
-
 router.post('/range', async (req, res) => {
     try {
         const { minLat, maxLat, minLon, maxLon } = req.body;
@@ -91,8 +81,6 @@ router.post('/range', async (req, res) => {
     }
 });
 
-
-// DELETE A LOCATION
 
 router.delete('/delete/:id', async (req, res) => {
     try {

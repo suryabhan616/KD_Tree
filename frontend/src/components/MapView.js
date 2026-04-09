@@ -11,7 +11,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-// Custom marker (blue)
+// Marker icon
 const blueIcon = new L.Icon({
   iconUrl: require('leaflet/dist/images/marker-icon.png'),
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
@@ -23,19 +23,18 @@ function MapView({ locations, results }) {
   const center = [22.5, 78.9]; // India center
 
   return (
-    <div className="map-container">
+    <div className="map-container" style={{ flex: 1 }}>
       <MapContainer
         center={center}
-        zoom={4}
+        zoom={5}
         style={{ height: '100%', width: '100%' }}
       >
-        {/* 🌍 Base Dark Map */}
-        <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+        {/* ✅ GOOGLE-LIKE MAP (REAL NAMES) */}
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
 
-        {/* 🧠 IMPORTANT: Real world labels (cities, places, etc.) */}
-        <TileLayer url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png" />
-
-        {/* 📍 Your Saved Locations */}
+        {/* 📍 Locations */}
         {locations.map((loc) => (
           <Marker
             key={loc._id}
@@ -51,7 +50,7 @@ function MapView({ locations, results }) {
           </Marker>
         ))}
 
-        {/* 🔍 Search Results (avoid duplicates) */}
+        {/* 🔍 Results */}
         {results.map((item, index) => {
           const loc = item.point || item;
           const isExisting = locations.some((l) => l._id === loc._id);

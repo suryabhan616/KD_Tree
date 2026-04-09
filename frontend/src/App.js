@@ -3,7 +3,7 @@ import axios from 'axios';
 import './App.css';
 
 import Sidebar from './components/Sidebar';
-import GlobeView from './components/GlobeView';
+import MapView from './components/MapView';
 import ResultCards from './components/ResultCards';
 import ActivityFeed from './components/ActivityFeed';
 
@@ -24,16 +24,18 @@ function App() {
   const loadLocations = async () => {
     try {
       setLoading(true);
+
       const res = await axios.get(`${API}/all`);
       setLocations(res.data);
-      
+
       const zones = res.data.reduce((acc, loc) => {
         const zone = loc.zone || 'default';
         acc[zone] = (acc[zone] || 0) + 1;
         return acc;
       }, {});
+
       setStats({ total: res.data.length, zones });
-      
+
       addActivity(`Loaded ${res.data.length} locations`);
     } catch (err) {
       console.error('Error:', err);
@@ -77,7 +79,7 @@ function App() {
             <span className="badge">📡 {Object.keys(stats.zones).length} Zones</span>
           </div>
         </div>
-        
+
         <div className="header-right">
           {loading && (
             <div className="loader">
@@ -100,7 +102,8 @@ function App() {
           onActivity={addActivity}
         />
 
-        <GlobeView locations={locations} results={results} />
+        {/* ✅ ONLY MAP */}
+        <MapView locations={locations} results={results} />
 
         <ResultCards results={results} type={resultType} />
       </div>

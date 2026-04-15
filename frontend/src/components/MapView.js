@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Fix Leaflet default icons
+// ✅ Fix Leaflet default icons
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -11,7 +11,11 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
+<<<<<<< HEAD
 // Custom marker icon
+=======
+// ✅ Custom marker
+>>>>>>> origin/master
 const blueIcon = new L.Icon({
   iconUrl: require('leaflet/dist/images/marker-icon.png'),
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
@@ -24,16 +28,25 @@ function MapView({ locations = [], results = [] }) {
 
   return (
     <div className="map-container" style={{ flex: 1, position: 'relative' }}>
+<<<<<<< HEAD
+=======
+      
+>>>>>>> origin/master
       <MapContainer
         center={center}
         zoom={5}
         style={{ height: '100%', width: '100%' }}
       >
+<<<<<<< HEAD
         {/* 🌍 Map tiles */}
+=======
+        {/* 🌍 Map tiles (with place names) */}
+>>>>>>> origin/master
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
+<<<<<<< HEAD
         {/* 📍 All stored locations */}
         {locations.map((loc) => (
           <Marker
@@ -79,6 +92,37 @@ function MapView({ locations = [], results = [] }) {
 
       {/* Empty state hint */}
       {locations.length === 0 && results.length === 0 && (
+=======
+        {/* 🔍 SHOW ONLY SEARCH RESULTS */}
+        {results && results.length > 0 &&
+          results.map((item, index) => {
+            const loc = item.point || item;
+
+            // ✅ Safety check (important)
+            if (!loc || !loc.latitude || !loc.longitude) return null;
+
+            return (
+              <Marker
+                key={`result-${index}`}
+                position={[loc.latitude, loc.longitude]}
+                icon={blueIcon}
+              >
+                <Popup>
+                  <strong>{loc.name || 'Unknown Location'}</strong><br />
+                  Lat: {loc.latitude}<br />
+                  Lon: {loc.longitude}<br />
+                  {item.distance &&
+                    `Distance: ${item.distance.toFixed(2)} km`}
+                </Popup>
+              </Marker>
+            );
+          })
+        }
+      </MapContainer>
+
+      {/* 🧠 Empty state message */}
+      {(!results || results.length === 0) && (
+>>>>>>> origin/master
         <div style={{
           position: 'absolute',
           top: 20,
@@ -94,6 +138,10 @@ function MapView({ locations = [], results = [] }) {
           🔍 Search or Range query to see locations
         </div>
       )}
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/master
     </div>
   );
 }

@@ -11,7 +11,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-// Marker icon
+// Custom marker icon
 const blueIcon = new L.Icon({
   iconUrl: require('leaflet/dist/images/marker-icon.png'),
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
@@ -19,22 +19,22 @@ const blueIcon = new L.Icon({
   iconAnchor: [12, 41],
 });
 
-function MapView({ locations, results }) {
+function MapView({ locations = [], results = [] }) {
   const center = [22.5, 78.9]; // India center
 
   return (
-    <div className="map-container" style={{ flex: 1 }}>
+    <div className="map-container" style={{ flex: 1, position: 'relative' }}>
       <MapContainer
         center={center}
         zoom={5}
         style={{ height: '100%', width: '100%' }}
       >
-        {/* ✅ GOOGLE-LIKE MAP (REAL NAMES) */}
+        {/* 🌍 Map tiles */}
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* 📍 Locations */}
+        {/* 📍 All stored locations */}
         {locations.map((loc) => (
           <Marker
             key={loc._id}
@@ -42,7 +42,7 @@ function MapView({ locations, results }) {
             icon={blueIcon}
           >
             <Popup>
-              <strong>{loc.name}</strong><br />
+              <strong>{loc.name || 'Unknown Location'}</strong><br />
               Lat: {loc.latitude}<br />
               Lon: {loc.longitude}<br />
               Zone: {loc.zone || 'default'}
@@ -50,12 +50,15 @@ function MapView({ locations, results }) {
           </Marker>
         ))}
 
-        {/* 🔍 Results */}
+        {/* 🔍 Search / query results (skip duplicates already shown above) */}
         {results.map((item, index) => {
           const loc = item.point || item;
-          const isExisting = locations.some((l) => l._id === loc._id);
 
-          if (isExisting) return null;
+          if (!loc || !loc.latitude || !loc.longitude) return null;
+
+          // Don't render a duplicate pin if already shown as a stored location
+          const isAlreadyShown = locations.some((l) => l._id === loc._id);
+          if (isAlreadyShown) return null;
 
           return (
             <Marker
@@ -64,16 +67,33 @@ function MapView({ locations, results }) {
               icon={blueIcon}
             >
               <Popup>
-                <strong>{loc.name}</strong><br />
+                <strong>{loc.name || 'Unknown Location'}</strong><br />
                 Lat: {loc.latitude}<br />
                 Lon: {loc.longitude}<br />
-                {item.distance &&
-                  `Distance: ${item.distance.toFixed(2)} km`}
+                {item.distance && `Distance: ${item.distance.toFixed(2)} km`}
               </Popup>
             </Marker>
           );
         })}
       </MapContainer>
+
+      {/* Empty state hint */}
+      {locations.length === 0 && results.length === 0 && (
+        <div style={{
+          position: 'absolute',
+          top: 20,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(0,0,0,0.7)',
+          color: 'white',
+          padding: '8px 16px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          zIndex: 1000
+        }}>
+          🔍 Search or Range query to see locations
+        </div>
+      )}
     </div>
   );
 }

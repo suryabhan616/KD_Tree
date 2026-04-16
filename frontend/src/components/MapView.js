@@ -11,7 +11,11 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
+<<<<<<< HEAD
+// Custom marker icon
+=======
 // ✅ Custom marker
+>>>>>>> origin/master
 const blueIcon = new L.Icon({
   iconUrl: require('leaflet/dist/images/marker-icon.png'),
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
@@ -19,22 +23,76 @@ const blueIcon = new L.Icon({
   iconAnchor: [12, 41],
 });
 
-function MapView({ locations, results }) {
+function MapView({ locations = [], results = [] }) {
   const center = [22.5, 78.9]; // India center
 
   return (
     <div className="map-container" style={{ flex: 1, position: 'relative' }}>
+<<<<<<< HEAD
+=======
       
+>>>>>>> origin/master
       <MapContainer
         center={center}
         zoom={5}
         style={{ height: '100%', width: '100%' }}
       >
+<<<<<<< HEAD
+        {/* 🌍 Map tiles */}
+=======
         {/* 🌍 Map tiles (with place names) */}
+>>>>>>> origin/master
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
+<<<<<<< HEAD
+        {/* 📍 All stored locations */}
+        {locations.map((loc) => (
+          <Marker
+            key={loc._id}
+            position={[loc.latitude, loc.longitude]}
+            icon={blueIcon}
+          >
+            <Popup>
+              <strong>{loc.name || 'Unknown Location'}</strong><br />
+              Lat: {loc.latitude}<br />
+              Lon: {loc.longitude}<br />
+              Zone: {loc.zone || 'default'}
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* 🔍 Search / query results (skip duplicates already shown above) */}
+        {results.map((item, index) => {
+          const loc = item.point || item;
+
+          if (!loc || !loc.latitude || !loc.longitude) return null;
+
+          // Don't render a duplicate pin if already shown as a stored location
+          const isAlreadyShown = locations.some((l) => l._id === loc._id);
+          if (isAlreadyShown) return null;
+
+          return (
+            <Marker
+              key={`result-${index}`}
+              position={[loc.latitude, loc.longitude]}
+              icon={blueIcon}
+            >
+              <Popup>
+                <strong>{loc.name || 'Unknown Location'}</strong><br />
+                Lat: {loc.latitude}<br />
+                Lon: {loc.longitude}<br />
+                {item.distance && `Distance: ${item.distance.toFixed(2)} km`}
+              </Popup>
+            </Marker>
+          );
+        })}
+      </MapContainer>
+
+      {/* Empty state hint */}
+      {locations.length === 0 && results.length === 0 && (
+=======
         {/* 🔍 SHOW ONLY SEARCH RESULTS */}
         {results && results.length > 0 &&
           results.map((item, index) => {
@@ -64,6 +122,7 @@ function MapView({ locations, results }) {
 
       {/* 🧠 Empty state message */}
       {(!results || results.length === 0) && (
+>>>>>>> origin/master
         <div style={{
           position: 'absolute',
           top: 20,
@@ -79,7 +138,10 @@ function MapView({ locations, results }) {
           🔍 Search or Range query to see locations
         </div>
       )}
+<<<<<<< HEAD
+=======
 
+>>>>>>> origin/master
     </div>
   );
 }
